@@ -50,6 +50,7 @@ Or you can download the binary from [here](https://github.com/doraemonkeys/parti
 - `-host`: Syncthing host (default: http://127.0.0.1:8384)
 - `-user`: Syncthing user
 - `-pwdFile`: Path to file containing Syncthing password
+- `-syncthing`: Path to Syncthing executable file (used for resolving relative paths)
 
 
 

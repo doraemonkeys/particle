@@ -4,25 +4,29 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/doraemonkeys/doraemon"
 	"github.com/sirupsen/logrus"
 )
 
 type dirScanner struct {
-	ignoreRules []StIgnoreCheckFunc
-	logger      *logrus.Logger
-	scanningDir string
+	ignoreRules      []StIgnoreCheckFunc
+	logger           *logrus.Logger
+	scanningDir      string
+	syncthingBinPath string
 }
 
-func NewDirScanner(ignoreRules []StIgnoreCheckFunc) *dirScanner {
+func NewDirScanner(ignoreRules []StIgnoreCheckFunc, syncthingBin string) *dirScanner {
 	return &dirScanner{
-		ignoreRules: ignoreRules,
-		logger:      logger,
+		ignoreRules:      ignoreRules,
+		logger:           logger,
+		syncthingBinPath: syncthingBin,
 	}
 }
 
-func (d *dirScanner) ScanToGenerateStIgnore(dir string, conn *syncThingConn) error {
+func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir bool, conn *syncThingConn) error {
 	doneChan := make(chan struct{})
 	defer close(doneChan)
 	go func() {
@@ -37,10 +41,35 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, conn *syncThingConn) err
 			}
 		}
 	}()
+
+	dir = filepath.ToSlash(dir)
+	if strings.HasPrefix(dir, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		dir = filepath.Join(homeDir, dir[2:])
+	}
+	if isSyncthingRelativeDir && strings.HasPrefix(dir, "./") {
+		if d.syncthingBinPath != "" {
+			syncthingBinDir := filepath.Dir(d.syncthingBinPath)
+			dir = filepath.Join(syncthingBinDir, dir[2:])
+		} else {
+			currDir, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("failed to get current directory: %w", err)
+			}
+			if doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing.exe")).IsFalse() &&
+				doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing")).IsFalse() {
+				return fmt.Errorf("can't find syncthing binary in %s, use `-syncthing` to specify", currDir)
+			}
+		}
+	}
 	dir, err := filepath.Abs(dir)
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
+
 	scannedIgnores, err := d.scanDir(dir, "")
 	if err != nil {
 		return err

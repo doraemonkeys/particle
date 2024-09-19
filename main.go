@@ -14,7 +14,9 @@ var (
 	host      = flag.String("host", "http://127.0.0.1:8384", "syncthing host")
 	user      = flag.String("user", "", "syncthing user")
 	pwdFile   = flag.String("pwdFile", "", "syncthing password file")
+	syncthing = flag.String("syncthing", "", "syncthing executable file") // optional，用于解析相对路径时使用
 )
+
 var logger *logrus.Logger
 
 func init() {
@@ -66,9 +68,9 @@ func main() {
 		logger.Infof("ready to scan: %s", dir)
 	}
 	logger.Info("start scanning...")
-	scanner := NewDirScanner(StIgnoreCheckList)
+	scanner := NewDirScanner(StIgnoreCheckList, *syncthing)
 	for _, dir := range dirs {
-		err = scanner.ScanToGenerateStIgnore(dir, conn)
+		err = scanner.ScanToGenerateStIgnore(dir, *web, conn)
 		if err != nil {
 			logger.Fatalf("scan dir: %s error: %v", dir, err)
 		}
