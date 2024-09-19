@@ -11,7 +11,6 @@ Particle is a Go-based tool designed to enhance Syncthing's ignore patterns func
   - Dart
   - Python (with Conda)
 - Integrates with Syncthing's web API for seamless operation
-- Offers both command-line and web-based interfaces
 
 ## Installation
 
