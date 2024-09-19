@@ -28,7 +28,7 @@ Or you can download the binary from [here](https://github.com/doraemonkeys/parti
 - Basic usage (local directory):
 
   ```bash
-  particle -dir /path/to/your/.stignore
+  particle -dir "/path/to/your/.stignore directory"
   ```
 
 - Using with Syncthing Web API:
