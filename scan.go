@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,47 +30,12 @@ func NewDirScanner(ignoreRules []StIgnoreCheckFunc, syncthingBin string) *dirSca
 func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir bool, conn *syncThingConn) error {
 	doneChan := make(chan struct{})
 	defer close(doneChan)
-	go func() {
-		ticker := time.NewTicker(time.Millisecond * 500)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				d.logger.Info("scanning: ", d.scanningDir)
-			case <-doneChan:
-				return
-			}
-		}
-	}()
+	go d.logScanning(doneChan)
 
-	dir = filepath.ToSlash(dir)
-	if strings.HasPrefix(dir, "~/") {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("failed to get home directory: %w", err)
-		}
-		dir = filepath.Join(homeDir, dir[2:])
-	}
-	if isSyncthingRelativeDir && strings.HasPrefix(dir, "./") {
-		if d.syncthingBinPath != "" {
-			syncthingBinDir := filepath.Dir(d.syncthingBinPath)
-			dir = filepath.Join(syncthingBinDir, dir[2:])
-		} else {
-			currDir, err := os.Getwd()
-			if err != nil {
-				return fmt.Errorf("failed to get current directory: %w", err)
-			}
-			if doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing.exe")).IsFalse() &&
-				doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing")).IsFalse() {
-				return fmt.Errorf("can't find syncthing binary in %s, use `-syncthing` to specify", currDir)
-			}
-		}
-	}
-	dir, err := filepath.Abs(dir)
+	dir, err := d.prepareDirectory(dir, isSyncthingRelativeDir)
 	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %w", err)
+		return err
 	}
-
 	scannedIgnores, err := d.scanDir(dir, "")
 	if err != nil {
 		return err
@@ -98,6 +64,72 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 		}
 	}
 	return nil
+}
+
+// New helper functions
+func (d *dirScanner) logScanning(doneChan chan struct{}) {
+	ticker := time.NewTicker(time.Millisecond * 500)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			d.logger.Info("scanning: ", d.scanningDir)
+		case <-doneChan:
+			return
+		}
+	}
+}
+
+func (d *dirScanner) prepareDirectory(dir string, isSyncthingRelativeDir bool) (string, error) {
+	dir = filepath.ToSlash(dir)
+	if strings.HasPrefix(dir, "~/") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to get home directory: %w", err)
+		}
+		dir = filepath.Join(homeDir, dir[2:])
+	}
+	var err error
+	if isSyncthingRelativeDir && strings.HasPrefix(dir, "./") {
+		dir, err = d.resolveSyncthingPath(dir)
+		if err != nil {
+			return "", err
+		}
+	}
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", fmt.Errorf("failed to get absolute path: %w", err)
+	}
+	return absDir, nil
+}
+
+func (d *dirScanner) resolveSyncthingPath(dir string) (string, error) {
+	if d.syncthingBinPath != "" {
+		syncthingBinDir := filepath.Dir(d.syncthingBinPath)
+		return filepath.Join(syncthingBinDir, dir[2:]), nil
+	}
+	cmdPath, err := exec.LookPath("syncthing")
+	if err == nil {
+		syncthingBinDir := filepath.Dir(cmdPath)
+		return filepath.Join(syncthingBinDir, dir[2:]), nil
+	}
+	currDir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current directory: %w", err)
+	}
+	if doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing.exe")).IsFalse() &&
+		doraemon.FileIsExist(filepath.Join(currDir, dir[2:], "syncthing")).IsFalse() {
+		return "", fmt.Errorf("can't find syncthing binary in %s, use `-syncthing` to specify or join the syncthing binary to $PATH", currDir)
+	}
+	return dir, nil
+}
+
+func (d *dirScanner) logUpdateStatus(updated bool, dir string) {
+	if updated {
+		d.logger.Infof("set ok in %s", dir)
+	} else {
+		d.logger.Infof("don't need to set in %s", dir)
+	}
 }
 
 func (d *dirScanner) scanDir(dir string, parentsDir string) ([]string, error) {
