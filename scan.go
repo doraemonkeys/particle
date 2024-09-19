@@ -124,14 +124,6 @@ func (d *dirScanner) resolveSyncthingPath(dir string) (string, error) {
 	return dir, nil
 }
 
-func (d *dirScanner) logUpdateStatus(updated bool, dir string) {
-	if updated {
-		d.logger.Infof("set ok in %s", dir)
-	} else {
-		d.logger.Infof("don't need to set in %s", dir)
-	}
-}
-
 func (d *dirScanner) scanDir(dir string, parentsDir string) ([]string, error) {
 	d.scanningDir = dir
 	entries, err := os.ReadDir(dir)
