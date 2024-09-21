@@ -53,11 +53,10 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 	if err != nil {
 		return err
 	}
-	fmt.Println()
 	if updated {
-		d.logger.Infof("set ok in %s", dir)
+		d.logger.Infof("Successfully updated settings in %s", dir)
 	} else {
-		d.logger.Infof("don't need to set in %s", dir)
+		d.logger.Infof("No updates required for %s", dir)
 	}
 	if updated && conn != nil {
 		err = conn.RestartSyncThing()
@@ -65,6 +64,7 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 			d.logger.Warnf("restart sync thing error: %v", err)
 		}
 	}
+	fmt.Println()
 	return nil
 }
 
