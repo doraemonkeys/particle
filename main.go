@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/doraemonkeys/mylog"
@@ -70,10 +71,12 @@ func main() {
 	logger.Info("start scanning...")
 	scanner := NewDirScanner(StIgnoreCheckList, *syncthing)
 	for _, dir := range dirs {
+		logger.Infof("scan dir: %s", dir)
 		err = scanner.ScanToGenerateStIgnore(dir, *web, conn)
 		if err != nil {
 			logger.Fatalf("scan dir: %s error: %v", dir, err)
 		}
 	}
+	fmt.Println()
 	logger.Info("done")
 }

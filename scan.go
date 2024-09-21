@@ -29,7 +29,6 @@ func NewDirScanner(ignoreRules []StIgnoreCheckFunc, syncthingBin string) *dirSca
 
 func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir bool, conn *syncThingConn) error {
 	doneChan := make(chan struct{})
-	defer close(doneChan)
 	go d.logScanning(doneChan)
 
 	dir, err := d.prepareDirectory(dir, isSyncthingRelativeDir)
@@ -40,6 +39,8 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 	if err != nil {
 		return err
 	}
+	close(doneChan)
+
 	var stIgnoreFile = filepath.Join(dir, ".stignore")
 	// d.logger.Infof("scan to generate stignore: %s", stIgnoreFile)
 	stIgnore, err := NewstIgnoreEdit(stIgnoreFile)
@@ -52,6 +53,7 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 	if err != nil {
 		return err
 	}
+	fmt.Println()
 	if updated {
 		d.logger.Infof("set ok in %s", dir)
 	} else {
