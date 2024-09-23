@@ -2,15 +2,23 @@
 
 Particle is a Go-based tool designed to enhance Syncthing's ignore patterns functionality. It addresses the need for more complex ignore rules, particularly for development projects using various programming languages and frameworks.
 
-## Features
+## How It Works
 
-- Automatically generates `.stignore` files based on project structure
-- Supports multiple programming languages and frameworks, including:
-  - Rust
-  - Node.js
-  - Dart
-  - Python (with Conda)
-- Integrates with Syncthing's web API for seamless operation
+Particle scans specified directories and applies a series of ignore pattern checks based on the project type. It generates `.stignore` files that are compatible with Syncthing, allowing for more granular control over which files and directories are synchronized.
+
+> Particle does not overwrite existing `.stignore` files. It will append new ignore patterns to the existing ones.
+>
+
+
+
+### Supported Project Types
+
+1. **Rust Projects**: Ignores the `target` directory when a `Cargo.toml` file is present.
+2. **Node.js Projects**: Ignores `node_modules` directories.
+3. **Dart Projects**: Ignores specific Dart and Flutter-related build and cache directories.
+4. **Python Projects**: Ignores Conda environments and related files.
+
+
 
 ## Installation
 
@@ -36,9 +44,6 @@ Or you can download the binary from [here](https://github.com/doraemonkeys/parti
   ```bash
   particle -web -host http://127.0.0.1:8384 -user youruser
   ```
-
-> Particle does not overwrite existing `.stignore` files. It will append new ignore patterns to the existing ones.
->
 
 
 
@@ -66,18 +71,6 @@ Particle uses environment variables and command-line flags for configuration. Th
 3. Interactive prompt (if not provided by other means)
 
 
-
-## How It Works
-
-Particle scans specified directories and applies a series of ignore pattern checks based on the project type. It generates `.stignore` files that are compatible with Syncthing, allowing for more granular control over which files and directories are synchronized.
-
-
-### Supported Project Types
-
-1. **Rust Projects**: Ignores the `target` directory when a `Cargo.toml` file is present.
-2. **Node.js Projects**: Ignores `node_modules` directories.
-3. **Dart Projects**: Ignores specific Dart and Flutter-related build and cache directories.
-4. **Python Projects**: Ignores Conda environments and related files.
 
 ## Contributing
 
