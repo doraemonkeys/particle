@@ -4,18 +4,20 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/doraemonkeys/mylog"
 	"github.com/sirupsen/logrus"
 )
 
 var (
-	targetDir = flag.String("dir", "", "target directory")
-	web       = flag.Bool("web", false, "get all dir from syncthing web api")
-	host      = flag.String("host", "http://127.0.0.1:8384", "syncthing host")
-	user      = flag.String("user", "", "syncthing user")
-	pwdFile   = flag.String("pwdFile", "", "syncthing password file")
-	syncthing = flag.String("syncthing", "", "syncthing executable file")
+	targetDir    = flag.String("dir", "", "target directory")
+	web          = flag.Bool("web", false, "get all dir from syncthing web api")
+	host         = flag.String("host", "http://127.0.0.1:8384", "syncthing host")
+	user         = flag.String("user", "", "syncthing user")
+	pwdFile      = flag.String("pwdFile", "", "syncthing password file")
+	syncthing    = flag.String("syncthing", "", "syncthing executable file")
+	sleepSeconds = flag.Int("sleep", 0, "sleep seconds after scan")
 )
 
 var logger *logrus.Logger
@@ -79,4 +81,7 @@ func main() {
 	}
 	fmt.Println()
 	logger.Info("done")
+	if *sleepSeconds > 0 {
+		time.Sleep(time.Duration(*sleepSeconds) * time.Second)
+	}
 }
