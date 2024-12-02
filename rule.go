@@ -41,7 +41,7 @@ var NodejsProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
 		filenames = append(filenames, v.Name())
 	}
 	if slices.Contains(filenames, "package.json") && slices.Contains(filenames, "node_modules") {
-		return []string{"node_modules"}
+		return []string{"node_modules", "dist"}
 	}
 	return nil
 }
