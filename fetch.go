@@ -17,9 +17,9 @@ import (
 )
 
 type syncThingConn struct {
-	userName   string
-	host       string
-	password   string
+	userName string
+	host     string
+	// password   string
 	authPassed bool
 	client     *http.Client
 }
@@ -53,10 +53,11 @@ func (s *syncThingConn) Connect(password string) error {
 	if err != nil {
 		return fmt.Errorf("error getting host: %v", err)
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("failed to get host with status code: %d", resp.StatusCode)
 	}
+	_, _ = io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
 
 	// POST auth
 	authURL := fmt.Sprintf("%s/rest/noauth/auth/password", s.host)
@@ -94,18 +95,25 @@ func (s *syncThingConn) Connect(password string) error {
 			return fmt.Errorf("error reading auth response body: %v", err)
 		}
 		fmt.Println(resp.StatusCode)
+		fmt.Println("headers:")
+		for k, v := range resp.Header {
+			fmt.Println(k, v)
+		}
 		fmt.Println(string(body))
 		return fmt.Errorf("auth failed: no cookies received, body: %s", string(body))
 	}
-	const CSRFTokenName = "CSRF-Token-RAPTNV7"
+	// CSRF-Token-EP7GDPV 54SuTFJuHVSWkBxDAFiVSzAbcM2KMTQY4rJ9bRKk5rZXYNbAivYHp2Wstt24if6i
+	// sessionid-EP7GDPV 1gXTPCdLnPPnPbFKeLQgQn2F4mxgWkgehYwb2pmfMsQjyDaVNzFKZHdTZgfbjzrT
+	const CSRFTokenName = "CSRF-Token" // e.g. CSRF-Token-7APTNV7
 	var CSRFTokenHeader string
 	for _, cookie := range s.client.Jar.Cookies(req.URL) {
-		if strings.EqualFold(cookie.Name, CSRFTokenName) {
+		// fmt.Println(cookie.Name, cookie.Value)
+		if strings.HasPrefix(cookie.Name, CSRFTokenName) {
 			CSRFTokenHeader = cookie.Value
 		}
 	}
 	if CSRFTokenHeader == "" {
-		return fmt.Errorf("CSRF-Token-RAPTNV7 not found in cookiejar")
+		return fmt.Errorf("CSRF-Token not found in cookiejar")
 	}
 	s.authPassed = true
 	return nil
@@ -123,15 +131,13 @@ func (s *syncThingConn) FetchDirectories() ([]string, error) {
 	}
 	req.Header.Set("Accept", "application/json")
 
-	const CSRFTokenName = "CSRF-Token-RAPTNV7"
-	const CSRFTokenHeader = "x-csrf-token-raptnv7"
+	const CSRFTokenName = "CSRF-Token" // e.g. CSRF-Token-7APTNV7
 	for _, cookie := range s.client.Jar.Cookies(req.URL) {
-		if strings.EqualFold(cookie.Name, CSRFTokenName) {
-			req.Header.Set(CSRFTokenHeader, cookie.Value)
+		// fmt.Println(cookie.Name, cookie.Value)
+		if strings.HasPrefix(cookie.Name, CSRFTokenName) {
+			// e.g. x-csrf-token-7aptnv7
+			req.Header.Set("x-"+strings.ToLower(cookie.Name), cookie.Value)
 		}
-	}
-	if req.Header.Get(CSRFTokenHeader) == "" {
-		return nil, fmt.Errorf("CSRF-Token-RAPTNV7 not found in cookiejar")
 	}
 	resp, err := s.client.Do(req)
 	if err != nil {
@@ -194,15 +200,13 @@ func (s *syncThingConn) RestartSyncThing() error {
 	}
 	req.Header.Set("Accept", "application/json")
 
-	const CSRFTokenName = "CSRF-Token-RAPTNV7"
-	const CSRFTokenHeader = "x-csrf-token-raptnv7"
+	const CSRFTokenName = "CSRF-Token" // e.g. CSRF-Token-7APTNV7
 	for _, cookie := range s.client.Jar.Cookies(req.URL) {
-		if strings.EqualFold(cookie.Name, CSRFTokenName) {
-			req.Header.Set(CSRFTokenHeader, cookie.Value)
+		// fmt.Println(cookie.Name, cookie.Value)
+		if strings.HasPrefix(cookie.Name, CSRFTokenName) {
+			// e.g. x-csrf-token-7aptnv7
+			req.Header.Set("x-"+strings.ToLower(cookie.Name), cookie.Value)
 		}
-	}
-	if req.Header.Get(CSRFTokenHeader) == "" {
-		return fmt.Errorf("CSRF-Token-RAPTNV7 not found in cookiejar")
 	}
 
 	resp, err := s.client.Do(req)
