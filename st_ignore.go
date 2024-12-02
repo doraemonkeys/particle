@@ -36,6 +36,9 @@ func NewstIgnoreEdit(filePath string) (*stIgnoreEdit, error) {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 	fileMd5, err := doraemon.ComputeMD5(bytes.NewReader(content))
+	if err != nil {
+		return nil, fmt.Errorf("failed to compute file md5: %w", err)
+	}
 	lines, err := doraemon.ReadLines(bytes.NewReader(content))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read lines: %w", err)
