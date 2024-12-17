@@ -137,7 +137,11 @@ func (d *dirScanner) scanDir(dir string, parentsDir string) ([]string, error) {
 	var ignoreNames = make(map[string]bool)
 	for _, v := range d.ignoreRules {
 		for _, ignoreName := range v(entries) {
-			ignores = append(ignores, parentsDir+"/"+ignoreName) //+"/**"
+			var ignorePath = parentsDir + "/" + ignoreName
+			if !*removeD {
+				ignorePath = "(?d)" + ignorePath
+			}
+			ignores = append(ignores, ignorePath) //+"/**"
 			ignoreNames[ignoreName] = true
 		}
 	}

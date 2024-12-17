@@ -18,6 +18,8 @@ var (
 	pwdFile      = flag.String("pwdFile", "", "syncthing password file")
 	syncthing    = flag.String("syncthing", "", "syncthing executable file")
 	sleepSeconds = flag.Int("sleep", 0, "sleep seconds after scan")
+	// remove ignore with '(?d)' prefix
+	removeD = flag.Bool("removeD", false, "remove ignore with '(?d)' prefix")
 )
 
 var logger *logrus.Logger
