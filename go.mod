@@ -1,6 +1,8 @@
 module github.com/doraemonkeys/particle
 
-go 1.23.1
+go 1.24
+
+tool github.com/doraemonkeys/gobuild
 
 require (
 	github.com/doraemonkeys/doraemon v0.5.1
@@ -15,6 +17,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/doraemonkeys/fast-mpmc v1.0.1 // indirect
+	github.com/doraemonkeys/gobuild v0.0.0-20240629021408-2f4f08a91f3a // indirect
 	github.com/ebitengine/purego v0.8.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect

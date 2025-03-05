@@ -10,6 +10,8 @@ github.com/doraemonkeys/doraemon v0.5.1 h1:ZJLbpv4XzpQ4WxNKRICeGtjD7HWEhUJqRBZ8U
 github.com/doraemonkeys/doraemon v0.5.1/go.mod h1:MMSnEXM15WZoNQVqdddIDlAg2BCtgw26z5sO+TRz2bU=
 github.com/doraemonkeys/fast-mpmc v1.0.1 h1:7ONUqBCOyTFBR4kDqdG0jsHJTDBS10sIfbjNH/O57tQ=
 github.com/doraemonkeys/fast-mpmc v1.0.1/go.mod h1:6yn5KIqS2ZuRXGQiok42rBht5BjacXnOSV28gfwTrfg=
+github.com/doraemonkeys/gobuild v0.0.0-20240629021408-2f4f08a91f3a h1:UQtxxCFYEAay/9vvHlsx3S87iYOw0czCdeBiR/9PziY=
+github.com/doraemonkeys/gobuild v0.0.0-20240629021408-2f4f08a91f3a/go.mod h1:dMMOc3A0ppbVB4KjS3Jx0gzQwXKw/ackjwU4O0kqMTI=
 github.com/doraemonkeys/mylog v0.2.6 h1:HGG5Oh48GT0F2/3r7QxRRKnlZEEXgqEch+tqPuj9xDk=
 github.com/doraemonkeys/mylog v0.2.6/go.mod h1:ZfRYAUHdq0S0snN9/7GmkHE9G0BaGr1j+eiMct4nKQo=
 github.com/ebitengine/purego v0.8.1 h1:sdRKd6plj7KYW33EH5As6YKfe8m9zbN9JMrOjNVF/BE=
