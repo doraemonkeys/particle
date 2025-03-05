@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -76,14 +75,25 @@ func main() {
 	}
 	logger.Info("start scanning...")
 	scanner := NewDirScanner(StIgnoreCheckList, *syncthing)
+	var updated bool
 	for _, dir := range dirs {
 		logger.Infof("scan dir: %s", dir)
-		err = scanner.ScanToGenerateStIgnore(dir, *web, conn)
+		updated, err = scanner.ScanToGenerateStIgnore(dir, *web)
 		if err != nil {
 			logger.Fatalf("scan dir: %s error: %v", dir, err)
 		}
 	}
-	fmt.Println()
+	if updated && conn != nil {
+		err = conn.RestartSyncThing()
+		if err != nil {
+			logger.Warnf("restart sync thing error: %v", err)
+		} else {
+			logger.Info("restart sync thing success")
+		}
+	}
+	if !updated {
+		logger.Info("no updated")
+	}
 	logger.Info("done")
 	if *sleepSeconds > 0 {
 		time.Sleep(time.Duration(*sleepSeconds) * time.Second)

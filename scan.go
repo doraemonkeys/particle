@@ -32,47 +32,41 @@ func (d *dirScanner) SetIgnoreRulesDir(ignoreRulesDir func(dir string) bool) {
 	d.ignoreRulesDir = ignoreRulesDir
 }
 
-func (d *dirScanner) ScanToGenerateStIgnore(dir string, dirFetchFromWeb bool, conn *syncThingConn) error {
+func (d *dirScanner) ScanToGenerateStIgnore(dir string, dirFetchFromWeb bool) (updated bool, err error) {
 	doneChan := make(chan struct{})
 	go d.logScanning(doneChan)
 
 	localRootDir, err := d.prepareDirectory(dir, dirFetchFromWeb)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	var stIgnoreFile = filepath.Join(localRootDir, ".stignore")
 	// d.logger.Infof("scan to generate stignore: %s", stIgnoreFile)
 	stIgnore, err := NewstIgnoreEdit(stIgnoreFile)
 	if err != nil {
-		return err
+		return false, err
 	}
 	d.ignoreRulesDir = stIgnore.GetBaseIgnoreCheckFunc()
 	scannedIgnores, err := d.scanDir(localRootDir, "")
 	if err != nil {
-		return err
+		return false, err
 	}
 	close(doneChan)
 
 	stIgnore.OverwriteIgnores(scannedIgnores)
 
-	updated, err := stIgnore.SetChange()
+	updated, err = stIgnore.SetChange()
 	if err != nil {
-		return err
+		return false, err
 	}
 	if updated {
 		d.logger.Infof("Successfully updated settings in %s", localRootDir)
 	} else {
 		d.logger.Infof("No updates required for %s", localRootDir)
 	}
-	if updated && conn != nil {
-		err = conn.RestartSyncThing()
-		if err != nil {
-			d.logger.Warnf("restart sync thing error: %v", err)
-		}
-	}
 	fmt.Println()
-	return nil
+	return updated, nil
 }
 
 // New helper functions
