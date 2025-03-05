@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/doraemonkeys/doraemon"
+	"github.com/syncthing/syncthing/lib/fs" // For fs.Filesystem
+	"github.com/syncthing/syncthing/lib/ignore"
 )
 
 const ParticleSeparatorLine = "// ---------------- AUTO GENRATE BY PARTICLE ----------------"
@@ -206,4 +209,25 @@ func (s *stIgnoreEdit) OverwriteIgnores(ignores []string) {
 
 func (s *stIgnoreEdit) NeedUpdate() bool {
 	return s.particleLinesChanged
+}
+func (s *stIgnoreEdit) GetBaseIgnoreCheckFunc() func(path string) bool {
+	baseIgnores := bytes.NewBuffer(nil)
+	for _, line := range s.baseLines {
+		baseIgnores.WriteString(line + "\n")
+	}
+	rootDir := filepath.Dir(s.filePath)
+	myFS := fs.NewFilesystem(fs.FilesystemTypeBasic, rootDir)
+	matcher := ignore.New(myFS)
+
+	err := matcher.Parse(baseIgnores, ".stignore")
+	if err != nil {
+		panic(err)
+	}
+	return func(path string) bool {
+		path = filepath.ToSlash(path)
+		rootDir = filepath.ToSlash(rootDir)
+		path = strings.TrimPrefix(path, rootDir)
+		path = strings.Trim(path, "/")
+		return matcher.Match(path).CanSkipDir()
+	}
 }

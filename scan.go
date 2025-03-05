@@ -14,6 +14,7 @@ import (
 
 type dirScanner struct {
 	ignoreRules      []StIgnoreCheckFunc
+	ignoreRulesDir   func(dir string) bool
 	logger           *logrus.Logger
 	scanningDir      string
 	syncthingBinPath string
@@ -27,26 +28,32 @@ func NewDirScanner(ignoreRules []StIgnoreCheckFunc, syncthingBin string) *dirSca
 	}
 }
 
-func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir bool, conn *syncThingConn) error {
+func (d *dirScanner) SetIgnoreRulesDir(ignoreRulesDir func(dir string) bool) {
+	d.ignoreRulesDir = ignoreRulesDir
+}
+
+func (d *dirScanner) ScanToGenerateStIgnore(dir string, dirFetchFromWeb bool, conn *syncThingConn) error {
 	doneChan := make(chan struct{})
 	go d.logScanning(doneChan)
 
-	dir, err := d.prepareDirectory(dir, isSyncthingRelativeDir)
+	localRootDir, err := d.prepareDirectory(dir, dirFetchFromWeb)
 	if err != nil {
 		return err
 	}
-	scannedIgnores, err := d.scanDir(dir, "")
-	if err != nil {
-		return err
-	}
-	close(doneChan)
 
-	var stIgnoreFile = filepath.Join(dir, ".stignore")
+	var stIgnoreFile = filepath.Join(localRootDir, ".stignore")
 	// d.logger.Infof("scan to generate stignore: %s", stIgnoreFile)
 	stIgnore, err := NewstIgnoreEdit(stIgnoreFile)
 	if err != nil {
 		return err
 	}
+	d.ignoreRulesDir = stIgnore.GetBaseIgnoreCheckFunc()
+	scannedIgnores, err := d.scanDir(localRootDir, "")
+	if err != nil {
+		return err
+	}
+	close(doneChan)
+
 	stIgnore.OverwriteIgnores(scannedIgnores)
 
 	updated, err := stIgnore.SetChange()
@@ -54,9 +61,9 @@ func (d *dirScanner) ScanToGenerateStIgnore(dir string, isSyncthingRelativeDir b
 		return err
 	}
 	if updated {
-		d.logger.Infof("Successfully updated settings in %s", dir)
+		d.logger.Infof("Successfully updated settings in %s", localRootDir)
 	} else {
-		d.logger.Infof("No updates required for %s", dir)
+		d.logger.Infof("No updates required for %s", localRootDir)
 	}
 	if updated && conn != nil {
 		err = conn.RestartSyncThing()
@@ -82,7 +89,7 @@ func (d *dirScanner) logScanning(doneChan chan struct{}) {
 	}
 }
 
-func (d *dirScanner) prepareDirectory(dir string, isSyncthingRelativeDir bool) (string, error) {
+func (d *dirScanner) prepareDirectory(dir string, dirFetchFromWeb bool) (string, error) {
 	dir = filepath.ToSlash(dir)
 	if strings.HasPrefix(dir, "~/") {
 		homeDir, err := os.UserHomeDir()
@@ -92,7 +99,7 @@ func (d *dirScanner) prepareDirectory(dir string, isSyncthingRelativeDir bool) (
 		dir = filepath.Join(homeDir, dir[2:])
 	}
 	var err error
-	if isSyncthingRelativeDir && strings.HasPrefix(dir, "./") {
+	if dirFetchFromWeb && strings.HasPrefix(dir, "./") {
 		dir, err = d.resolveSyncthingPath(dir)
 		if err != nil {
 			return "", err
@@ -127,6 +134,11 @@ func (d *dirScanner) resolveSyncthingPath(dir string) (string, error) {
 }
 
 func (d *dirScanner) scanDir(dir string, parentsDir string) ([]string, error) {
+	if d.ignoreRulesDir != nil && d.ignoreRulesDir(dir) {
+		d.logger.Debugf("ignore dir: %s\n", dir)
+		return nil, nil
+	}
+
 	d.scanningDir = dir
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -136,7 +148,7 @@ func (d *dirScanner) scanDir(dir string, parentsDir string) ([]string, error) {
 	var ignores []string
 	var ignoreNames = make(map[string]bool)
 	for _, v := range d.ignoreRules {
-		for _, ignoreName := range v(entries) {
+		for _, ignoreName := range v(dir, entries) {
 			var ignorePath = parentsDir + "/" + ignoreName
 			if !*removeD {
 				ignorePath = "(?d)" + ignorePath

@@ -19,15 +19,21 @@ var (
 	syncthing    = flag.String("syncthing", "", "syncthing executable file")
 	sleepSeconds = flag.Int("sleep", 0, "sleep seconds after scan")
 	// remove ignore with '(?d)' prefix
-	removeD = flag.Bool("removeD", false, "remove ignore with '(?d)' prefix")
+	removeD  = flag.Bool("removeD", false, "remove ignore with '(?d)' prefix")
+	logLevel = flag.String("logLevel", "info", "log level")
 )
 
 var logger *logrus.Logger
 
 func init() {
+	flag.Parse()
+	if len(os.Args) < 2 {
+		flag.Usage()
+		os.Exit(1)
+	}
 	l, err := mylog.NewLogger(mylog.LogConfig{
 		LogFileDisable: true,
-		// LogLevel:       "trace",
+		LogLevel:       *logLevel,
 		// DateSplit:      true,
 	})
 	if err != nil {
@@ -37,11 +43,7 @@ func init() {
 }
 
 func parseFlags() ([]string, *syncThingConn, error) {
-	flag.Parse()
-	if len(os.Args) < 2 {
-		flag.Usage()
-		os.Exit(1)
-	}
+
 	if *web {
 		conn, err := NewSyncThingConn(*user, *host)
 		if err != nil {

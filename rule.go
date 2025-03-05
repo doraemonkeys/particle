@@ -11,7 +11,7 @@ import (
 // 	checkList func([]os.DirEntry) []string
 // }
 
-type StIgnoreCheckFunc = func([]os.DirEntry) []string
+type StIgnoreCheckFunc = func(dir string, entry []os.DirEntry) []string
 
 var StIgnoreCheckList = []StIgnoreCheckFunc{
 	RustProjectStIgnoreChecker,
@@ -22,7 +22,7 @@ var StIgnoreCheckList = []StIgnoreCheckFunc{
 
 // Ignore Rust build files
 // If it contains Cargo.toml and Cargo.lock, it is considered a Rust project
-var RustProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
+var RustProjectStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
 	var filenames = make([]string, 0)
 	for _, v := range entry {
 		filenames = append(filenames, v.Name())
@@ -35,7 +35,7 @@ var RustProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
 
 // Ignore Node.js project
 // If it contains package.json and node_modules, it is considered a Node.js project
-var NodejsProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
+var NodejsProjectStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
 	var filenames = make([]string, 0)
 	for _, v := range entry {
 		filenames = append(filenames, v.Name())
@@ -48,7 +48,7 @@ var NodejsProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
 
 // Ignore Flutter project
 // If it contains pubspec.yaml and pubspec.lock, it is considered a Flutter project
-var DartProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
+var DartProjectStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
 	var filenames = make([]string, 0)
 	for _, v := range entry {
 		filenames = append(filenames, v.Name())
@@ -60,7 +60,7 @@ var DartProjectStIgnoreChecker = func(entry []os.DirEntry) []string {
 }
 
 // Ignore Python .conda
-var PythonCondaStIgnoreChecker = func(entry []os.DirEntry) []string {
+var PythonCondaStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
 	var filenames = make([]string, 0)
 	for _, v := range entry {
 		filenames = append(filenames, v.Name())
