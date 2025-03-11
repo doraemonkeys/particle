@@ -78,9 +78,12 @@ func main() {
 	var updated bool
 	for _, dir := range dirs {
 		logger.Infof("scan dir: %s", dir)
-		updated, err = scanner.ScanToGenerateStIgnore(dir, *web)
+		updated1, err := scanner.ScanToGenerateStIgnore(dir, *web)
 		if err != nil {
 			logger.Fatalf("scan dir: %s error: %v", dir, err)
+		}
+		if updated1 {
+			updated = true
 		}
 	}
 	if updated && conn != nil {
