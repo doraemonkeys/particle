@@ -18,6 +18,7 @@ var StIgnoreCheckList = []StIgnoreCheckFunc{
 	NodejsProjectStIgnoreChecker,
 	DartProjectStIgnoreChecker,
 	PythonCondaStIgnoreChecker,
+	AndroidProjectStIgnoreChecker,
 }
 
 // Ignore Rust build files
@@ -69,6 +70,17 @@ var PythonCondaStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
 		if strings.HasPrefix(v, ".conda") {
 			return []string{".conda"}
 		}
+	}
+	return nil
+}
+
+var AndroidProjectStIgnoreChecker = func(_ string, entry []os.DirEntry) []string {
+	var filenames = make([]string, 0)
+	for _, v := range entry {
+		filenames = append(filenames, v.Name())
+	}
+	if slices.Contains(filenames, "build.gradle") || slices.Contains(filenames, "build.gradle.kts") {
+		return []string{"build"}
 	}
 	return nil
 }
